@@ -22,6 +22,12 @@ from standardize_us_address import standardize_us_address
 TRUNCATE `political_donation`;
 TRUNCATE `political_donation_contributor`;
 TRUNCATE `political_donation_contributor_address`;
+
+
+Known issues: 
+ * 2016 - end of file, last entry spread over two lines
+ * 2015 - line 1007, amount is listed in employer address info
+
 """
 
 
@@ -65,10 +71,10 @@ ignore_doc_types = ['Independent Expenditure', 'Campaign Finance Report (Cover P
 
 for row in csvreader:
 
+    line += 1
+
     #print(len(row))
     #break
-
-    #print(line)
 
     if len(row) == 23:
 
@@ -76,6 +82,9 @@ for row in csvreader:
             row[i] = row[i].strip()
 
         row_dict = dict(zip(header_row, row))
+
+        print(line, row_dict['DocType'])
+
 
         # cat Explorer.Transactions.2016.YTD.txt | grep 'Independent Expenditure'
         # Skip 'Independent Expenditure'
@@ -402,31 +411,35 @@ for row in csvreader:
 
 
         # Store all donations, including multiple annonymous (under $100) and unknown (badly formed people, address)
-        if True:
+        #if True:
+        if row_dict['Amount']:
 
-            donation = PoliticalDonation()
-            donation.is_annonymous = is_annonymous
-            donation.contributor_id = contributor_id
-            donation.contributor_type_id = contributor_type_id
-            donation.contribution_type_id = contribution_type_id
-            donation.committee_id = committee_id
-            donation.filing_period_id = filing_period_id
-            donation.employer_name_id = employer_name_id
-            donation.employer_occupation_id = employer_occupation_id
+            try:
 
-            donation.donation_date = donation_date_obj 
-            donation.donation_amount = donation_amount
-            donation.provided_name = row_dict['EntityName']
-            donation.provided_address = row_dict['EntityAddressLine1']
-            donation.is_fixed_asset = is_fixed_asset
+                donation = PoliticalDonation()
+                donation.is_annonymous = is_annonymous
+                donation.contributor_id = contributor_id
+                donation.contributor_type_id = contributor_type_id
+                donation.contribution_type_id = contribution_type_id
+                donation.committee_id = committee_id
+                donation.filing_period_id = filing_period_id
+                donation.employer_name_id = employer_name_id
+                donation.employer_occupation_id = employer_occupation_id
 
-            session.add(donation)        
-            session.commit()
+                donation.donation_date = donation_date_obj 
+                donation.donation_amount = donation_amount
+                donation.provided_name = row_dict['EntityName']
+                donation.provided_address = row_dict['EntityAddressLine1']
+                donation.is_fixed_asset = is_fixed_asset
 
+                session.add(donation)        
+                session.commit()
 
-        total_contributed = total_contributed + float(donation_amount)
+                total_contributed = total_contributed + float(donation_amount)
 
-        line += 1
+            except Exception as e:
+                print("Error saving PoliticalDonation:", e)
+
 
     else:
         print("ERROR: ", line, row)

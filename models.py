@@ -417,7 +417,7 @@ class PoliticalDonationEmployerName(Base):
     __tablename__ = 'political_donation_employer_name'
 
     id = Column(Integer, primary_key=True)
-    employer_name = Column(String(64), nullable=False)
+    employer_name = Column(String(128), nullable=False)
     employer_slug = Column(String(32), nullable=False, server_default='')    
     employer_description = Column(Text, server_default='')
 
