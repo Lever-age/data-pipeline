@@ -5,3 +5,4 @@ SQLAlchemy==1.1.6
 SQLAlchemy-Utils==0.32.9
 usaddress==0.5.7
 probablepeople==0.5.2
+python-cicero==0.1.0

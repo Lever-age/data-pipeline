@@ -216,6 +216,41 @@ class PoliticalDonationContributionType(Base):
 
 
 
+t_political_donation_contributor_address_cicero_district_set = Table(
+    'political_donation_contributor_address_cicero_district_set', metadata,
+    Column('address_id', Integer, ForeignKey('political_donation_contributor_address.id'), nullable=False, index=True),
+    Column('cicero_district_id', Integer, ForeignKey('cicero_district.id'), nullable=False, index=True)
+)
+
+
+
+
+class CiceroDistrict(Base):
+    __tablename__ = 'cicero_district'
+
+    id = Column(Integer, primary_key=True)
+
+    cicero_id = Column(Integer)
+    sk = Column(Integer)
+
+    district_type = Column(String(64), server_default=text(""), nullable=False)
+    valid_from = Column(String(32), server_default=text(""), nullable=False)
+    valid_to = Column(String(32), server_default=text(""), nullable=False)
+    country = Column(String(64), server_default=text(""), nullable=False)
+    state = Column(String(64), server_default=text(""), nullable=False)
+    city = Column(String(64), server_default=text(""), nullable=False)
+    subtype = Column(String(64), server_default=text(""), nullable=False)
+    district_id = Column(String(64), server_default=text(""), nullable=False)
+    #num_officials = Column(Integer, server_default=text("0"), nullable=False)
+    label = Column(String(64), server_default=text(""), nullable=False)
+    #ocd_id = Column(String(128), server_default=text(""), nullable=False)
+    data = Column(Text, server_default=text(""), nullable=False)
+    last_update_date = Column(String(32), server_default=text(""), nullable=False)
+
+
+
+
+
 class PoliticalDonationContributorAddress(Base):
     __tablename__ = 'political_donation_contributor_address'
     #__table_args__ = (
@@ -250,8 +285,66 @@ class PoliticalDonationContributorAddress(Base):
     num_individual_contribs = Column(Integer, nullable=False, server_default='0')
     num_non_individual_contribs = Column(Integer, nullable=False, server_default='0')
 
+    cicero_districts = relationship(CiceroDistrict, secondary=t_political_donation_contributor_address_cicero_district_set,
+        backref=backref('addresses'))    
+
     def __repr__(self):
-        return "<PoliticalDonationContributorAddress(full_name='%s')>" % (self.addr1)
+        return "<PoliticalDonationContributorAddress(addr1='%s')>" % (self.addr1)
+
+
+
+class PoliticalDonationContributorAddressCiceroDetails(Base):
+    __tablename__ = 'political_donation_contributor_address_cicero_details'
+
+    id = Column(Integer, primary_key=True)
+
+    address_id = Column(Integer, ForeignKey(PoliticalDonationContributorAddress.id), nullable=False, index=True)
+    address = relationship(PoliticalDonationContributorAddress, backref=backref('cicero_detail', order_by=id))
+
+    wkid = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=False)
+
+    geo_x = Column(Numeric(12, 8), nullable=False)
+    geo_y = Column(Numeric(12, 8), nullable=False)
+
+    match_addr = Column(String(128), nullable=False, server_default='')
+    #match_postal = Column(String(32), nullable=False, server_default='')
+    #match_country = Column(String(32), nullable=False, server_default='')
+    locator = Column(String(64), nullable=False, server_default='')
+    #match_region = Column(String(32), nullable=False, server_default='')
+    #match_subregion = Column(String(32), nullable=False, server_default='')
+    #match_city = Column(String(64), nullable=False, server_default='')
+    partial_match = Column(Boolean, nullable=False, server_default='')
+    geoservice = Column(String(32), nullable=False, server_default='')
+
+
+class PoliticalDonationContributorAddressCiceroRaw(Base):
+    __tablename__ = 'political_donation_contributor_address_cicero_raw'
+
+    id = Column(Integer, primary_key=True)
+
+    #address_id = Column(Integer, ForeignKey(PoliticalDonationContributorAddress.id), nullable=False, index=True)
+    #address = relationship(PoliticalDonationContributorAddress, backref=backref('cicero_raw', order_by=id))
+
+
+    addr1 = Column(String(128), nullable=False, server_default='')
+
+    zipcode5 = Column(String(16), nullable=False, index=True)
+
+    district_ids = Column(String(128), nullable=False, server_default='')
+
+    geo_x = Column(Numeric(12, 8), nullable=False)
+    geo_y = Column(Numeric(12, 8), nullable=False)
+    match_addr = Column(String(128), nullable=False, server_default='')
+
+    raw_text = Column(Text, nullable=False, server_default='')
+
+    def __repr__(self):
+        return "<PoliticalDonationContributorAddressCiceroRaw(addr1='%s')>" % (self.addr1)
+
+
+
+
 
 
 

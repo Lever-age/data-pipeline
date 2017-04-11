@@ -95,6 +95,9 @@ for row in csvreader:
         if row_dict['EntityName'] == '':
             continue
 
+        # Only store first 5 digits of zipcode
+        row_dict['EntityZip'] = row_dict['EntityZip'][:5]
+
         #print(row_dict)
         #break
         """

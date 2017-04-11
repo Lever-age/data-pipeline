@@ -12,3 +12,10 @@ db pass: finance_pass
 db host: localhost
 
 Then source the database structure from pa_philly_campaign_finance.sql, load the requirements.txt file, and execute the import.py script.
+
+###Cicero Import:
+
+Set your environment variables. For instance, edit .bashrc for bash shell on *nix systems. 
+
+export CICERO_USER='user'
+export CICERO_PASS='pass'
