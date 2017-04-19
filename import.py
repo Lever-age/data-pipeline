@@ -83,7 +83,7 @@ for row in csvreader:
 
         row_dict = dict(zip(header_row, row))
 
-        print(line, row_dict['DocType'])
+        #print(line, row_dict['DocType'])
 
 
         # cat Explorer.Transactions.2016.YTD.txt | grep 'Independent Expenditure'
@@ -271,7 +271,27 @@ for row in csvreader:
                     contributor_address = PoliticalDonationContributorAddress()
                     contributor_address.address_type = address_dict['address_type']
 
+                    street = ''
+
+                    street_build_list = ['StreetNamePreDirectional', 'StreetName', \
+                        'StreetNamePostType', 'StreetNamePostDirectional']
+
+                    for field in street_build_list:
+
+                        if field in address_dict:
+                            street = street+' '+address_dict[field]
+
+                    street = street.strip()
+
+                    number = ''
+
+                    if 'AddressNumber' in address_dict:
+                        number = address_dict['AddressNumber']
+
                     contributor_address.addr1 = addr1
+                    contributor_address.number = number
+                    contributor_address.street = street
+
                     contributor_address.city = row_dict['EntityCity']
                     contributor_address.state = row_dict['EntityState']
                     contributor_address.zipcode = row_dict['EntityZip']
