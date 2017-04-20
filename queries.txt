@@ -1,0 +1,97 @@
+
+
+
+# Get distinct contributors to a committee
+SELECT DISTINCT d.contributor_id 
+FROM `political_donation` d, political_donation_contributor c, political_donation_contributor_address a 
+WHERE d.`contributor_id` = c.id AND c.address_id = a.id AND d.`committee_id` = 601 AND a.state = 'PA' 
+
+
+# Get addresses that donated to a campaign
+SELECT DISTINCT a.* 
+FROM `political_donation` d, political_donation_contributor c, political_donation_contributor_address a 
+WHERE d.`contributor_id` = c.id AND c.address_id = a.id AND d.`committee_id` = 601 AND a.state = 'PA' 
+    AND a.address_type = 'Street Address'
+
+
+
+
+# Addresses that match open_addresses from campaign 762 (2096 in PA)
+SELECT DISTINCT a.id AS a_id, oa.id AS oa_id, oa.number, oa.street, oa.latitude, oa.longitude
+FROM `political_donation` d, political_donation_contributor c, political_donation_contributor_address a, open_addresses oa
+WHERE d.`contributor_id` = c.id AND c.address_id = a.id AND a.zipcode = oa.zipcode AND CONCAT(oa.number, ' ', oa.street) LIKE CONCAT(a.addr1, '%')
+    AND d.`committee_id` = 762 AND a.state = 'PA' AND a.address_type = 'Street Address'
+
+
+INSERT INTO `open_address_to_donor_address` 
+    (SELECT DISTINCT oa.id AS oa_id, a.id AS a_id
+    FROM `political_donation` d, political_donation_contributor c, political_donation_contributor_address a, open_addresses oa
+    WHERE d.`contributor_id` = c.id AND c.address_id = a.id AND a.zipcode = oa.zipcode 
+        AND a.number = oa.number AND a.street = oa.street
+        AND a.state = 'PA' AND a.address_type = 'Street Address');
+
+
+
+
+
+# Addresses from a campaign that were found in open_addresses
+SELECT DISTINCT oa.* FROM `open_address_to_donor_address` oa, `political_donation` d, political_donation_contributor c, political_donation_contributor_address a 
+WHERE oa.donor_address_id = a.id
+    AND d.`contributor_id` = c.id AND c.address_id = a.id AND d.`committee_id` = 762 
+
+
+
+
+# Find mispellings of Philadelphia
+SELECT city, count(*) AS numc FROM `political_donation_contributor_address`
+WHERE state = 'PA' AND city LIKE 'Ph%'
+  AND city NOT IN ('Philadelphia', 'Philipsburg', 'Phoenixville', 'Pheonixville')
+GROUP BY city ORDER BY numc DESC
+
+
+# Find number of donations by district for a given race
+SELECT cd.district_id, COUNT(*) AS num_donations FROM `political_donation` d,
+    `political_donation_contributor` c, 
+    `political_donation_contributor_address` a,
+    `political_donation_contributor_address_cicero_district_set` s,
+    `cicero_district` cd
+WHERE d.contributor_id = c.id AND c.address_id = a.id AND a.id = s.address_id 
+    AND s.cicero_district_id = cd.id AND d.committee_id = 601
+    AND cd.district_type = 'LOCAL' AND cd.subtype = 'CITY' AND cd.district_id != 'AT LARGE'
+    AND d.contribution_type_id IN (23, 24, 25, 26, 27, 28)
+GROUP BY cd.district_id
+
+# Find total amount donated by district 
+SELECT cd.district_id, SUM(d.donation_amount) AS total_donated FROM `political_donation` d,
+    `political_donation_contributor` c, 
+    `political_donation_contributor_address` a,
+    `political_donation_contributor_address_cicero_district_set` s,
+    `cicero_district` cd
+WHERE d.contributor_id = c.id AND c.address_id = a.id AND a.id = s.address_id 
+    AND s.cicero_district_id = cd.id AND d.committee_id = 601
+    AND cd.district_type = 'LOCAL' AND cd.subtype = 'CITY' AND cd.district_id != 'AT LARGE'
+    AND d.contribution_type_id IN (23, 24, 25, 26, 27, 28)
+GROUP BY cd.district_id
+
+
+
+# Get donations for donation_histogram
+SELECT ROUND(d.donation_amount, -1) as rounded_amount, count(*) as num_d
+FROM `political_donation` d, `political_donation_contribution_type` t
+WHERE d.contribution_type_id = t.id AND t.is_donation = 1 AND d.committee_id = 762
+    AND d.donation_date > '2014-12-31' AND d.donation_date < '2016-01-01'
+GROUP BY ROUND(d.donation_amount, -1)
+ORDER BY rounded_amount;
+
+
+
+SELECT f.period_name, count(*) as num_p 
+FROM `political_donation` d, `political_donation_contribution_type` t, `political_donation_filing_period` f
+WHERE d.contribution_type_id = t.id AND d.filing_period_id = f.id
+    AND t.is_donation = 1 AND d.committee_id = 762
+    AND d.donation_date > '2014-12-31' AND d.donation_date < '2016-01-01'
+    AND  ROUND(d.donation_amount, -1) = 100
+GROUP BY filing_period_id
+ORDER BY num_p DESC
+
+
