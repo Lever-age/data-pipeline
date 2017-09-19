@@ -4,6 +4,8 @@ Data scraping and cleaning for the Leverage project. This repository contains co
 
 This currently uses Python 2.7. Sorry, SQLAlchemy wasn't working with version 3.
 
+It also requires this library, in the directory [standardize_us_address](https://github.com/OpenDataDE/standardize-us-address)
+
 Easiest thing, for now, is to just create a MySQL database just like I did. Future versions will allow these to be changed in settings.
 
 db name: pa_philly_campaign_finance

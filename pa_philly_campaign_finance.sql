@@ -1,145 +1,167 @@
--- phpMyAdmin SQL Dump
--- version 4.6.1
--- http://www.phpmyadmin.net
+-- MySQL dump 10.13  Distrib 5.7.19, for Linux (x86_64)
 --
--- Host: localhost
--- Generation Time: Apr 02, 2017 at 06:27 PM
--- Server version: 5.7.17-0ubuntu0.16.04.1
--- PHP Version: 7.0.15-0ubuntu0.16.04.4
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET time_zone = "+00:00";
-
+-- Host: localhost    Database: leverage_philly
+-- ------------------------------------------------------
+-- Server version	5.7.19-0ubuntu0.16.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Database: `pa_philly_campaign_finance`
+-- Table structure for table `candidacy`
 --
 
-DELIMITER $$
---
--- Functions
---
-CREATE DEFINER=`root`@`localhost` FUNCTION `slugify` (`dirty_string` VARCHAR(200)) RETURNS VARCHAR(200) CHARSET latin1 BEGIN
-    DECLARE x, y , z Int;
-    Declare temp_string, new_string VarChar(200);
-    Declare is_allowed Bool;
-    Declare c, check_char VarChar(1);
-
-    set temp_string = LOWER(dirty_string);
-
-    Set temp_string = replace(temp_string, '&', ' and ');
-
-    Select temp_string Regexp('[^a-z0-9\-]+') into x;
-    If x = 1 then
-        set z = 1;
-        While z <= Char_length(temp_string) Do
-            Set c = Substring(temp_string, z, 1);
-            Set is_allowed = False;
-            If !((ascii(c) = 45) or (ascii(c) >= 48 and ascii(c) <= 57) or (ascii(c) >= 97 and ascii(c) <= 122)) Then
-                Set temp_string = Replace(temp_string, c, '-');
-            End If;
-            set z = z + 1;
-        End While;
-    End If;
-
-    Select temp_string Regexp("^-|-$|'") into x;
-    If x = 1 Then
-        Set temp_string = Replace(temp_string, "'", '');
-        Set z = Char_length(temp_string);
-        Set y = Char_length(temp_string);
-        Dash_check: While z > 1 Do
-            If Strcmp(SubString(temp_string, -1, 1), '-') = 0 Then
-                Set temp_string = Substring(temp_string,1, y-1);
-                Set y = y - 1;
-            Else
-                Leave Dash_check;
-            End If;
-            Set z = z - 1;
-        End While;
-    End If;
-
-    Repeat
-        Select temp_string Regexp("--") into x;
-        If x = 1 Then
-            Set temp_string = Replace(temp_string, "--", "-");
-        End If;
-    Until x <> 1 End Repeat;
-
-    If LOCATE('-', temp_string) = 1 Then
-        Set temp_string = SUBSTRING(temp_string, 2);
-    End If;
-
-    Return temp_string;
-END$$
-
-DELIMITER ;
-
--- --------------------------------------------------------
+DROP TABLE IF EXISTS `candidacy`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `candidacy` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `candidate_id` int(11) NOT NULL,
+  `race_id` int(11) NOT NULL,
+  `candidacy_type` enum('incumbent','challenger') NOT NULL,
+  `outcome` enum('won','lost') NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `candidate_id` (`candidate_id`),
+  KEY `race_id` (`race_id`),
+  KEY `candidacy_type` (`candidacy_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `political_donation`
+-- Table structure for table `candidate`
 --
 
-CREATE TABLE `political_donation` (
-  `id` int(4) UNSIGNED NOT NULL,
-  `is_annonymous` tinyint(1) UNSIGNED NOT NULL DEFAULT '0',
-  `contributor_id` int(4) UNSIGNED NOT NULL,
-  `contributor_type_id` int(4) UNSIGNED NOT NULL,
-  `contribution_type_id` int(4) UNSIGNED NOT NULL,
-  `committee_id` int(4) UNSIGNED NOT NULL,
-  `filing_period_id` int(4) UNSIGNED NOT NULL,
-  `employer_name_id` int(4) UNSIGNED NOT NULL,
-  `employer_occupation_id` int(4) UNSIGNED NOT NULL,
-  `donation_date` datetime NOT NULL,
-  `donation_amount` decimal(10,2) NOT NULL,
-  `provided_name` varchar(128) NOT NULL,
-  `provided_address` varchar(128) NOT NULL,
-  `is_fixed_asset` smallint(1) UNSIGNED NOT NULL
+DROP TABLE IF EXISTS `candidate`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `candidate` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `party_id` int(1) unsigned NOT NULL,
+  `fec_id` char(9) DEFAULT NULL,
+  `district` tinyint(3) unsigned NOT NULL,
+  `name_first` varchar(128) NOT NULL,
+  `name_middle` varchar(32) NOT NULL DEFAULT '',
+  `name_last` varchar(32) NOT NULL,
+  `name_suffix` varchar(8) NOT NULL DEFAULT '',
+  `slug` varchar(64) NOT NULL,
+  `website` varchar(128) NOT NULL DEFAULT '',
+  `social_blob` text NOT NULL,
+  `is_active` int(1) NOT NULL DEFAULT '1',
+  `candidate_order` int(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `fec_id` (`fec_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `candidate_committees`
+--
+
+DROP TABLE IF EXISTS `candidate_committees`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `candidate_committees` (
+  `candidate_id` int(11) NOT NULL,
+  `committee_id` int(11) NOT NULL,
+  PRIMARY KEY (`candidate_id`,`committee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `candidate_filing`
+--
+
+DROP TABLE IF EXISTS `candidate_filing`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `candidate_filing` (
+  `id` mediumint(4) unsigned NOT NULL AUTO_INCREMENT,
+  `in_general` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `candidate_id` mediumint(4) unsigned NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `office` varchar(128) NOT NULL,
+  `office_district` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `county` char(2) NOT NULL,
+  `party` varchar(32) NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `mail_address` varchar(128) NOT NULL,
+  `email` varchar(128) NOT NULL,
+  `url` varchar(128) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `date_filed` datetime NOT NULL,
+  `date_found` datetime NOT NULL,
+  `page_found` varchar(16) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `political_donation_committee`
+-- Table structure for table `cicero_district`
 --
 
-CREATE TABLE `political_donation_committee` (
-  `id` int(4) UNSIGNED NOT NULL,
-  `candidate_id` int(4) UNSIGNED NOT NULL DEFAULT '0',
-  `is_candidates` int(10) UNSIGNED NOT NULL DEFAULT '0',
+DROP TABLE IF EXISTS `cicero_district`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cicero_district` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `cicero_id` int(10) unsigned NOT NULL,
+  `sk` int(10) unsigned NOT NULL,
+  `district_type` varchar(64) NOT NULL,
+  `valid_from` varchar(32) NOT NULL,
+  `valid_to` varchar(32) NOT NULL,
+  `country` varchar(64) NOT NULL,
+  `state` varchar(8) NOT NULL,
+  `city` varchar(64) NOT NULL,
+  `subtype` varchar(64) NOT NULL,
+  `district_id` varchar(64) NOT NULL,
+  `num_officials` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `label` varchar(64) NOT NULL,
+  `ocd_id` varchar(128) NOT NULL DEFAULT '',
+  `data` text NOT NULL,
+  `last_update_date` varchar(32) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=68 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `committee`
+--
+
+DROP TABLE IF EXISTS `committee`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `committee` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `candidate_id` int(4) unsigned NOT NULL DEFAULT '0',
+  `is_candidates` int(10) unsigned NOT NULL DEFAULT '0',
   `committee_name` varchar(128) NOT NULL,
-  `committee_slug` varchar(48) DEFAULT NULL,
+  `committee_slug` varchar(128) DEFAULT NULL,
   `committee_description` text,
   `donations_2015` decimal(10,2) DEFAULT '0.00',
-  `donations_2016` decimal(10,2) DEFAULT '0.00'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `political_donation_contribution_type`
---
-
-CREATE TABLE `political_donation_contribution_type` (
-  `id` int(4) UNSIGNED NOT NULL,
-  `type_name` varchar(128) NOT NULL,
-  `type_slug` varchar(32) NOT NULL DEFAULT '',
-  `type_description` text
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+  `donations_2016` decimal(10,2) DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `committee_name` (`committee_name`),
+  KEY `committee_slug` (`committee_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=1159 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `political_donation_contributor`
+-- Table structure for table `contributor`
 --
 
-CREATE TABLE `political_donation_contributor` (
-  `id` int(4) UNSIGNED NOT NULL,
+DROP TABLE IF EXISTS `contributor`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `contributor` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `address_id` int(4) NOT NULL DEFAULT '0',
   `name_prefix` varchar(64) NOT NULL DEFAULT '',
   `name_first` varchar(64) NOT NULL DEFAULT '',
@@ -150,21 +172,32 @@ CREATE TABLE `political_donation_contributor` (
   `slug` varchar(64) DEFAULT NULL,
   `is_person` smallint(1) NOT NULL DEFAULT '0',
   `is_business` smallint(1) NOT NULL DEFAULT '0',
-  `num_contributions` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
-  `num_committees_contrib_to` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
-  `total_contributed_2015` decimal(10,2) UNSIGNED DEFAULT NULL,
-  `total_contributed_2016` decimal(10,2) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+  `num_contributions` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `num_committees_contrib_to` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `total_contributed_2015` decimal(12,2) DEFAULT NULL,
+  `total_contributed_2016` decimal(12,2) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `name_first` (`name_first`),
+  KEY `name_last` (`name_last`),
+  KEY `name_prefix` (`name_prefix`),
+  KEY `name_suffix` (`name_suffix`),
+  KEY `address_id` (`address_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=85944 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `political_donation_contributor_address`
+-- Table structure for table `contributor_address`
 --
 
-CREATE TABLE `political_donation_contributor_address` (
-  `id` int(4) UNSIGNED NOT NULL,
+DROP TABLE IF EXISTS `contributor_address`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `contributor_address` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `address_type` varchar(64) NOT NULL DEFAULT '',
+  `number` varchar(16) NOT NULL DEFAULT '',
+  `street` varchar(64) NOT NULL DEFAULT '',
   `addr1` varchar(128) NOT NULL DEFAULT '',
   `addr2` varchar(128) NOT NULL DEFAULT '',
   `po_box` varchar(16) NOT NULL DEFAULT '',
@@ -172,70 +205,392 @@ CREATE TABLE `political_donation_contributor_address` (
   `state` varchar(32) NOT NULL DEFAULT '',
   `zipcode` varchar(16) NOT NULL DEFAULT '',
   `slug` varchar(64) DEFAULT NULL,
-  `num_individual_contribs` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
-  `num_non_individual_contribs` mediumint(8) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+  `num_individual_contribs` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `num_non_individual_contribs` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `city` (`city`,`state`),
+  KEY `zipcode` (`zipcode`),
+  KEY `addr1` (`addr1`),
+  KEY `address_type` (`address_type`),
+  KEY `number` (`number`),
+  KEY `street` (`street`)
+) ENGINE=MyISAM AUTO_INCREMENT=54989 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `political_donation_contributor_type`
+-- Table structure for table `contributor_type`
 --
 
-CREATE TABLE `political_donation_contributor_type` (
-  `id` int(4) UNSIGNED NOT NULL,
+DROP TABLE IF EXISTS `contributor_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `contributor_type` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `type_name` varchar(64) NOT NULL,
   `type_slug` varchar(32) NOT NULL DEFAULT '',
-  `type_description` text
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `type_description` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `type_name` (`type_name`),
+  KEY `type_slug` (`type_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- --------------------------------------------------------
+--
+-- Table structure for table `fb_events`
+--
+
+DROP TABLE IF EXISTS `fb_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `fb_events` (
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `candidate_id` mediumint(8) unsigned NOT NULL,
+  `fb_page_id` bigint(10) unsigned NOT NULL,
+  `fb_event_id` bigint(10) unsigned NOT NULL,
+  `event_type` varchar(16) NOT NULL,
+  `event_name` varchar(255) NOT NULL,
+  `category` varchar(32) NOT NULL,
+  `description` text NOT NULL,
+  `attending_count` mediumint(9) NOT NULL,
+  `declined_count` mediumint(9) NOT NULL,
+  `interested_count` mediumint(9) NOT NULL,
+  `maybe_count` mediumint(9) NOT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime NOT NULL,
+  `is_cancelled` tinyint(1) NOT NULL,
+  `place_id` bigint(10) unsigned NOT NULL,
+  `place_name` varchar(255) NOT NULL,
+  `place_location` text NOT NULL,
+  `photos` text NOT NULL,
+  `num_photos` mediumint(8) unsigned NOT NULL,
+  `picture` text NOT NULL,
+  `fb_created_at` datetime NOT NULL,
+  `fb_updated_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `candidate_id` (`candidate_id`),
+  KEY `type` (`event_type`),
+  KEY `fb_post_id` (`fb_event_id`),
+  KEY `fb_user_id` (`fb_page_id`),
+  KEY `category` (`category`)
+) ENGINE=MyISAM AUTO_INCREMENT=362 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `fb_posts`
+--
+
+DROP TABLE IF EXISTS `fb_posts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `fb_posts` (
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `candidate_id` mediumint(8) unsigned NOT NULL,
+  `fb_page_id` bigint(10) unsigned NOT NULL,
+  `fb_post_id` bigint(10) unsigned NOT NULL,
+  `post_type` varchar(16) NOT NULL,
+  `message` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `story` text NOT NULL,
+  `link` text NOT NULL,
+  `caption` text NOT NULL,
+  `description` text NOT NULL,
+  `full_picture` text NOT NULL,
+  `post_name` text NOT NULL,
+  `picture` text NOT NULL,
+  `permalink_url` text NOT NULL,
+  `reactions` text NOT NULL,
+  `num_reactions` mediumint(8) unsigned NOT NULL,
+  `num_comments` mediumint(9) NOT NULL,
+  `fb_created_at` datetime NOT NULL,
+  `fb_updated_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `candidate_id` (`candidate_id`),
+  KEY `type` (`post_type`),
+  KEY `fb_page_id` (`fb_page_id`),
+  KEY `fb_post_id` (`fb_post_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=3234 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `open_address_to_donor_address`
+--
+
+DROP TABLE IF EXISTS `open_address_to_donor_address`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `open_address_to_donor_address` (
+  `open_address_id` mediumint(8) unsigned NOT NULL,
+  `donor_address_id` mediumint(8) unsigned NOT NULL,
+  PRIMARY KEY (`open_address_id`,`donor_address_id`),
+  KEY `donor_address_id` (`donor_address_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `open_addresses`
+--
+
+DROP TABLE IF EXISTS `open_addresses`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `open_addresses` (
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `number` varchar(16) NOT NULL,
+  `street` varchar(64) NOT NULL,
+  `zipcode` smallint(5) unsigned NOT NULL,
+  `longitude` decimal(12,8) NOT NULL,
+  `latitude` decimal(12,8) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `zipcode5` (`zipcode`),
+  KEY `number` (`number`),
+  KEY `street` (`street`)
+) ENGINE=MyISAM AUTO_INCREMENT=674237 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `party`
+--
+
+DROP TABLE IF EXISTS `party`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `party` (
+  `id` int(1) unsigned NOT NULL AUTO_INCREMENT,
+  `party_name` varchar(32) NOT NULL,
+  `slug` varchar(32) NOT NULL,
+  `party_order` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation`
+--
+
+DROP TABLE IF EXISTS `political_donation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `is_annonymous` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `contributor_id` int(4) unsigned NOT NULL,
+  `contributor_type_id` int(4) unsigned NOT NULL,
+  `contribution_type_id` int(4) unsigned NOT NULL,
+  `committee_id` int(4) unsigned NOT NULL,
+  `filing_period_id` int(4) unsigned NOT NULL,
+  `employer_name_id` int(4) unsigned NOT NULL,
+  `employer_occupation_id` int(4) unsigned NOT NULL,
+  `donation_date` datetime NOT NULL,
+  `donation_amount` decimal(10,2) NOT NULL,
+  `provided_name` varchar(128) NOT NULL,
+  `provided_address` varchar(128) NOT NULL,
+  `is_fixed_asset` smallint(1) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `contributor_id` (`contributor_id`),
+  KEY `contributor_type_id` (`contributor_type_id`),
+  KEY `contribution_type_id` (`contribution_type_id`),
+  KEY `committee_id` (`committee_id`),
+  KEY `filing_period_id` (`filing_period_id`),
+  KEY `donation_date` (`donation_date`),
+  KEY `donation_amount` (`donation_amount`),
+  KEY `employer_name_id` (`employer_name_id`,`employer_occupation_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=182263 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation_contribution_type`
+--
+
+DROP TABLE IF EXISTS `political_donation_contribution_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation_contribution_type` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `is_donation` tinyint(4) NOT NULL DEFAULT '0',
+  `type_name` varchar(128) NOT NULL,
+  `type_name_short` varchar(32) NOT NULL DEFAULT '',
+  `type_slug` varchar(32) NOT NULL DEFAULT '',
+  `type_description` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `type_name` (`type_name`),
+  KEY `type_slug` (`type_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation_contributor_address_cicero_details`
+--
+
+DROP TABLE IF EXISTS `political_donation_contributor_address_cicero_details`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation_contributor_address_cicero_details` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `address_id` int(10) unsigned NOT NULL,
+  `wkid` int(11) NOT NULL,
+  `score` int(11) NOT NULL,
+  `geo_x` decimal(12,8) NOT NULL,
+  `geo_y` decimal(12,8) NOT NULL,
+  `match_addr` varchar(192) NOT NULL,
+  `match_postal` varchar(32) NOT NULL DEFAULT '',
+  `match_country` varchar(32) NOT NULL DEFAULT '',
+  `locator` varchar(64) NOT NULL,
+  `match_region` varchar(32) NOT NULL DEFAULT '',
+  `match_subregion` varchar(32) NOT NULL DEFAULT '',
+  `match_city` varchar(64) NOT NULL DEFAULT '',
+  `partial_match` tinyint(1) NOT NULL DEFAULT '0',
+  `geoservice` varchar(32) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation_contributor_address_cicero_district_set`
+--
+
+DROP TABLE IF EXISTS `political_donation_contributor_address_cicero_district_set`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation_contributor_address_cicero_district_set` (
+  `address_id` mediumint(8) unsigned NOT NULL,
+  `cicero_district_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`address_id`,`cicero_district_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation_contributor_address_cicero_raw`
+--
+
+DROP TABLE IF EXISTS `political_donation_contributor_address_cicero_raw`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation_contributor_address_cicero_raw` (
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `address_id` int(11) NOT NULL DEFAULT '0',
+  `addr1` varchar(128) NOT NULL,
+  `zipcode5` smallint(5) unsigned NOT NULL,
+  `district_ids` varchar(128) NOT NULL,
+  `geo_x` decimal(12,8) NOT NULL,
+  `geo_y` decimal(12,8) NOT NULL,
+  `match_addr` varchar(192) NOT NULL,
+  `raw_text` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=344 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `political_donation_contributor_address_cicero_raw_ward`
+--
+
+DROP TABLE IF EXISTS `political_donation_contributor_address_cicero_raw_ward`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `political_donation_contributor_address_cicero_raw_ward` (
+  `id` int(11) NOT NULL,
+  `contributor_address_id` int(11) NOT NULL DEFAULT '0',
+  `geo_x` char(16) NOT NULL,
+  `geo_y` char(16) NOT NULL,
+  `ward` int(11) NOT NULL,
+  UNIQUE KEY `contributor_address_id` (`contributor_address_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `political_donation_employer_name`
 --
 
+DROP TABLE IF EXISTS `political_donation_employer_name`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `political_donation_employer_name` (
-  `id` int(4) UNSIGNED NOT NULL,
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `employer_name` varchar(128) NOT NULL,
   `employer_slug` varchar(32) NOT NULL DEFAULT '',
-  `employer_description` text
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+  `employer_description` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `employer_name` (`employer_name`),
+  KEY `employer_slug` (`employer_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=8622 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `political_donation_employer_occupation`
 --
 
+DROP TABLE IF EXISTS `political_donation_employer_occupation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `political_donation_employer_occupation` (
-  `id` int(4) UNSIGNED NOT NULL,
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `occupation_name` varchar(64) NOT NULL,
   `occupation_slug` varchar(32) NOT NULL DEFAULT '',
-  `occupation_description` text
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
+  `occupation_description` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `occupation_name` (`occupation_name`),
+  KEY `occupation_slug` (`occupation_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=5704 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `political_donation_filing_period`
 --
 
+DROP TABLE IF EXISTS `political_donation_filing_period`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `political_donation_filing_period` (
-  `id` int(4) UNSIGNED NOT NULL,
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
   `period_name` varchar(64) NOT NULL,
   `period_slug` varchar(32) NOT NULL DEFAULT '',
-  `period_description` text
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `period_description` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `period_name` (`period_name`),
+  KEY `period_slug` (`period_slug`)
+) ENGINE=MyISAM AUTO_INCREMENT=105 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- --------------------------------------------------------
+--
+-- Table structure for table `race`
+--
+
+DROP TABLE IF EXISTS `race`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `race` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `election_type` enum('primary','general') NOT NULL,
+  `election_year` year(4) NOT NULL,
+  `election_date` int(11) NOT NULL,
+  `seat_status` enum('filled','open seat','retired') NOT NULL,
+  `race_order` mediumint(4) unsigned NOT NULL DEFAULT '0',
+  `race_name` varchar(64) NOT NULL,
+  `race_district` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `race_description` text,
+  `num_candidates` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `parties_short_text` varchar(16) NOT NULL DEFAULT '',
+  `slug` varchar(48) NOT NULL,
+  `is_statewide` int(11) NOT NULL DEFAULT '0',
+  `area` varchar(32) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `race_order` (`race_order`),
+  KEY `race_name` (`race_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `raw_donations`
 --
 
+DROP TABLE IF EXISTS `raw_donations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `raw_donations` (
-  `id` mediumint(8) UNSIGNED NOT NULL,
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `FilerName` varchar(128) NOT NULL,
   `Year` varchar(32) NOT NULL,
   `Cycle` varchar(32) NOT NULL,
@@ -258,165 +613,145 @@ CREATE TABLE `raw_donations` (
   `Description` varchar(255) NOT NULL,
   `Amended` varchar(64) NOT NULL,
   `SubDate` varchar(32) NOT NULL,
-  `FiledBy` varchar(128) NOT NULL
+  `FiledBy` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `Year` (`Year`),
+  KEY `Year_2` (`Year`),
+  KEY `Cycle` (`Cycle`),
+  KEY `DocType` (`DocType`),
+  KEY `FilerName` (`FilerName`),
+  KEY `EntityCity` (`EntityCity`),
+  KEY `EmployerName` (`EmployerName`),
+  KEY `Amended` (`Amended`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Indexes for dumped tables
+-- Table structure for table `social_media_accounts`
 --
 
---
--- Indexes for table `political_donation`
---
-ALTER TABLE `political_donation`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `contributor_id` (`contributor_id`),
-  ADD KEY `contributor_type_id` (`contributor_type_id`),
-  ADD KEY `contribution_type_id` (`contribution_type_id`),
-  ADD KEY `committee_id` (`committee_id`),
-  ADD KEY `filing_period_id` (`filing_period_id`),
-  ADD KEY `donation_date` (`donation_date`),
-  ADD KEY `donation_amount` (`donation_amount`),
-  ADD KEY `employer_name_id` (`employer_name_id`,`employer_occupation_id`);
+DROP TABLE IF EXISTS `social_media_accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `social_media_accounts` (
+  `id` int(4) unsigned NOT NULL AUTO_INCREMENT,
+  `social_media_site_id` int(2) unsigned NOT NULL,
+  `candidate_id` int(4) unsigned NOT NULL,
+  `account_url` varchar(128) NOT NULL,
+  `account_id` varchar(64) NOT NULL DEFAULT '',
+  `account_name` varchar(64) NOT NULL DEFAULT '',
+  `last_checked` datetime NOT NULL DEFAULT '1980-01-01 00:00:00',
+  `account_order` int(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `last_checked` (`last_checked`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Indexes for table `political_donation_committee`
---
-ALTER TABLE `political_donation_committee`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `committee_name` (`committee_name`),
-  ADD KEY `committee_slug` (`committee_slug`);
-
---
--- Indexes for table `political_donation_contribution_type`
---
-ALTER TABLE `political_donation_contribution_type`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `type_name` (`type_name`),
-  ADD KEY `type_slug` (`type_slug`);
-
---
--- Indexes for table `political_donation_contributor`
---
-ALTER TABLE `political_donation_contributor`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `name_first` (`name_first`),
-  ADD KEY `name_last` (`name_last`),
-  ADD KEY `name_prefix` (`name_prefix`),
-  ADD KEY `name_suffix` (`name_suffix`),
-  ADD KEY `address_id` (`address_id`);
-
---
--- Indexes for table `political_donation_contributor_address`
---
-ALTER TABLE `political_donation_contributor_address`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `city` (`city`,`state`),
-  ADD KEY `zipcode` (`zipcode`),
-  ADD KEY `addr1` (`addr1`);
-
---
--- Indexes for table `political_donation_contributor_type`
---
-ALTER TABLE `political_donation_contributor_type`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `type_name` (`type_name`),
-  ADD KEY `type_slug` (`type_slug`);
-
---
--- Indexes for table `political_donation_employer_name`
---
-ALTER TABLE `political_donation_employer_name`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `employer_name` (`employer_name`),
-  ADD KEY `employer_slug` (`employer_slug`);
-
---
--- Indexes for table `political_donation_employer_occupation`
---
-ALTER TABLE `political_donation_employer_occupation`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `occupation_name` (`occupation_name`),
-  ADD KEY `occupation_slug` (`occupation_slug`);
-
---
--- Indexes for table `political_donation_filing_period`
---
-ALTER TABLE `political_donation_filing_period`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `period_name` (`period_name`),
-  ADD KEY `period_slug` (`period_slug`);
-
---
--- Indexes for table `raw_donations`
---
-ALTER TABLE `raw_donations`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `Year` (`Year`),
-  ADD KEY `Year_2` (`Year`),
-  ADD KEY `Cycle` (`Cycle`),
-  ADD KEY `DocType` (`DocType`),
-  ADD KEY `FilerName` (`FilerName`),
-  ADD KEY `EntityCity` (`EntityCity`),
-  ADD KEY `EmployerName` (`EmployerName`),
-  ADD KEY `Amended` (`Amended`);
-
---
--- AUTO_INCREMENT for dumped tables
+-- Table structure for table `social_media_sites`
 --
 
+DROP TABLE IF EXISTS `social_media_sites`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `social_media_sites` (
+  `id` int(2) unsigned NOT NULL AUTO_INCREMENT,
+  `social_name` varchar(32) NOT NULL,
+  `base_url` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
--- AUTO_INCREMENT for table `political_donation`
+-- Table structure for table `sqllite_campaign`
 --
-ALTER TABLE `political_donation`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=368210;
+
+DROP TABLE IF EXISTS `sqllite_campaign`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sqllite_campaign` (
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `year` smallint(5) unsigned NOT NULL,
+  `cycle` varchar(32) NOT NULL,
+  `candidate_id` smallint(5) unsigned NOT NULL,
+  `position` varchar(64) NOT NULL,
+  `party` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=102 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
--- AUTO_INCREMENT for table `political_donation_committee`
+-- Table structure for table `sqllite_candidate`
 --
-ALTER TABLE `political_donation_committee`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1090;
+
+DROP TABLE IF EXISTS `sqllite_candidate`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sqllite_candidate` (
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `candidate_name` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=97 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
--- AUTO_INCREMENT for table `political_donation_contribution_type`
+-- Table structure for table `sqllite_candidate_to_committee`
 --
-ALTER TABLE `political_donation_contribution_type`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+DROP TABLE IF EXISTS `sqllite_candidate_to_committee`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sqllite_candidate_to_committee` (
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `sqllite_candidate_id` smallint(5) unsigned NOT NULL,
+  `candidate_name` varchar(128) NOT NULL,
+  `committee_id` mediumint(8) unsigned NOT NULL,
+  `committee_name` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
--- AUTO_INCREMENT for table `political_donation_contributor`
+-- Table structure for table `us_contributions_by_individuals_active`
 --
-ALTER TABLE `political_donation_contributor`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78158;
---
--- AUTO_INCREMENT for table `political_donation_contributor_address`
---
-ALTER TABLE `political_donation_contributor_address`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52209;
---
--- AUTO_INCREMENT for table `political_donation_contributor_type`
---
-ALTER TABLE `political_donation_contributor_type`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
---
--- AUTO_INCREMENT for table `political_donation_employer_name`
---
-ALTER TABLE `political_donation_employer_name`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7225;
---
--- AUTO_INCREMENT for table `political_donation_employer_occupation`
---
-ALTER TABLE `political_donation_employer_occupation`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4846;
---
--- AUTO_INCREMENT for table `political_donation_filing_period`
---
-ALTER TABLE `political_donation_filing_period`
-  MODIFY `id` int(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
---
--- AUTO_INCREMENT for table `raw_donations`
---
-ALTER TABLE `raw_donations`
-  MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113039;
+
+DROP TABLE IF EXISTS `us_contributions_by_individuals_active`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `us_contributions_by_individuals_active` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `fec_committee_id` char(9) NOT NULL,
+  `amendment_indicator` char(1) NOT NULL,
+  `report_type` char(3) NOT NULL,
+  `primary_general` char(5) NOT NULL,
+  `image_number` char(18) NOT NULL,
+  `transaction_type` char(3) NOT NULL,
+  `entity_type` char(3) NOT NULL,
+  `contributor_name` varchar(200) NOT NULL,
+  `city` varchar(30) NOT NULL,
+  `state` char(2) NOT NULL,
+  `zipcode` char(9) NOT NULL,
+  `employer` varchar(38) NOT NULL,
+  `occupation` varchar(38) NOT NULL,
+  `transaction_date` date NOT NULL,
+  `amount` decimal(14,2) NOT NULL,
+  `from_fec_id` char(9) NOT NULL,
+  `transaction_id` varchar(32) NOT NULL,
+  `file_num` bigint(20) NOT NULL,
+  `memo_code` char(1) NOT NULL,
+  `memo_text` char(100) NOT NULL,
+  `fec_record_number` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2017-09-19 19:28:39
