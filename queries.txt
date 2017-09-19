@@ -75,6 +75,41 @@ GROUP BY cd.district_id
 
 
 
+
+# Find number of donations by ward for a given race
+SELECT w.ward, COUNT(*) AS num_donations FROM `political_donation` d,
+    `political_donation_contributor` c, 
+    `political_donation_contributor_address` a,
+    `political_donation_contributor_address_cicero_raw_ward` w
+WHERE d.contributor_id = c.id AND c.address_id = a.id
+    AND d.committee_id = 601
+    AND a.id = w.contributor_address_id
+    AND d.contribution_type_id IN (23, 24, 25, 26, 27, 28)
+GROUP BY w.ward
+
+
+# Find total amount donated by ward 
+SELECT w.ward, SUM(d.donation_amount) AS total_donated FROM `political_donation` d,
+    `political_donation_contributor` c, 
+    `political_donation_contributor_address` a,
+    `political_donation_contributor_address_cicero_raw_ward` w
+WHERE d.contributor_id = c.id AND c.address_id = a.id 
+    AND d.committee_id = 601
+    AND a.id = w.contributor_address_id
+    AND d.contribution_type_id IN (23, 24, 25, 26, 27, 28)
+GROUP BY w.ward
+
+
+
+UPDATE political_donation_contributor_address_cicero_raw_ward w, `political_donation_contributor_address` a,
+    `political_donation_contributor_address_cicero_raw` r
+SET w.contributor_address_id = a.id 
+WHERE w.id = r.id AND a.addr1 = r.addr1 AND a.zipcode = r.zipcode5
+
+
+
+
+
 # Get donations for donation_histogram
 SELECT ROUND(d.donation_amount, -1) as rounded_amount, count(*) as num_d
 FROM `political_donation` d, `political_donation_contribution_type` t
@@ -84,7 +119,7 @@ GROUP BY ROUND(d.donation_amount, -1)
 ORDER BY rounded_amount;
 
 
-
+# Get periods for given campaign and donatin amount
 SELECT f.period_name, count(*) as num_p 
 FROM `political_donation` d, `political_donation_contribution_type` t, `political_donation_filing_period` f
 WHERE d.contribution_type_id = t.id AND d.filing_period_id = f.id
@@ -95,3 +130,10 @@ GROUP BY filing_period_id
 ORDER BY num_p DESC
 
 
+
+# Donations by district/pa/us
+
+
+
+
+# 

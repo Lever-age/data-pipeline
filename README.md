@@ -19,3 +19,8 @@ Set your environment variables. For instance, edit .bashrc for bash shell on *ni
 
 export CICERO_USER='user'
 export CICERO_PASS='pass'
+
+SELECT * FROM `political_donation` WHERE donation_date >= '2017-01-01'
+
+DELETE FROM `political_donation` WHERE donation_date >= '2017-01-01'
+

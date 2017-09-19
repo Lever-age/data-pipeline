@@ -208,7 +208,9 @@ class PoliticalDonationContributionType(Base):
     __tablename__ = 'political_donation_contribution_type'
 
     id = Column(Integer, primary_key=True)
+    is_donation = Column(Boolean, nullable=False, server_default='')
     type_name = Column(String(128), nullable=False)
+    type_name_short = Column(String(32), nullable=False)
     type_slug = Column(String(32), nullable=False, server_default='')    
     type_description = Column(Text, server_default='')
 
@@ -741,6 +743,10 @@ def return_office_id_from_name_and_district(name, district):
     return office.id
 
 """
+
+
+
+
 
 
 

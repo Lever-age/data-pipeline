@@ -7,34 +7,20 @@ import os
 
 import csv
 
-import re
+import json
 
 import datetime
 
-from models import session, RawDonation, DeElectionDBCache, PoliticalDonationContributorAddress, PoliticalDonationContributor
-from models import PoliticalDonation
+from models import *
 
-from functions import clean_name, people_fields_to_strip_periods
+from functions import *
 
-from standardize_us_address import standardize_us_address
+from standardize_us_address import *
 
-"""
-TRUNCATE `political_donation`;
-TRUNCATE `political_donation_contributor`;
-TRUNCATE `political_donation_contributor_address`;
-
-
-Known issues: 
- * 2016 - end of file, last entry spread over two lines
- * 2015 - line 1007, amount is listed in employer address info
-
-"""
-
-
-year = sys.argv[1] if len(sys.argv) > 1 else 2016
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
+year = int(sys.argv[1]) if len(sys.argv) > 1 else datetime.datetime.now().year
 
 file_location = current_dir+'/Explorer.Transactions.'+str(year)+'.YTD.txt'
 
