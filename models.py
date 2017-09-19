@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql://finance_user:finance_pass@localhost/pa_philly_campaign_finance?charset=utf8&use_unicode=0')
+engine = create_engine('mysql://leverage:leverage_pass@localhost/leverage_philly?charset=utf8&use_unicode=0')
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -55,8 +55,8 @@ class RawDonation(Base):
 
 
 
-class PoliticalDonationCommittee(Base):
-    __tablename__ = 'political_donation_committee'
+class Committee(Base):
+    __tablename__ = 'committee'
 
     id = Column(Integer, primary_key=True)
 
@@ -75,7 +75,7 @@ class PoliticalDonationCommittee(Base):
     donations_2016 = Column(Numeric(10, 2), nullable=False)    
 
     def __repr__(self):
-        return "<PoliticalDonationCommittee(committee_name='%s')>" % (self.committee_name)
+        return "<Committee(committee_name='%s')>" % (self.committee_name)
 
     #@hybrid_property
     def number_of_donations(self):
@@ -111,27 +111,27 @@ class PoliticalDonationCommittee(Base):
 
     def donations_by_state(self):
 
-        return session.query(PoliticalDonationContributorAddress.state, 
+        return session.query(ContributorAddress.state, 
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationContributorAddress.contributors)\
-            .join(PoliticalDonationContributor.donations)\
+            .join(ContributorAddress.contributors)\
+            .join(Contributor.donations)\
             .filter(PoliticalDonation.committee_id==self.id)\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
-            .group_by(PoliticalDonationContributorAddress.state)\
+            .group_by(ContributorAddress.state)\
             .order_by(desc('num_c'))\
 
 
     def non_individual_contributions(self, limit=100):
 
-        return session.query(PoliticalDonationContributor, 
+        return session.query(Contributor, 
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationContributor.donations)\
+            .join(Contributor.donations)\
             .filter(PoliticalDonation.committee_id == self.id)\
             .filter(PoliticalDonation.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
-            .group_by(PoliticalDonationContributor.id)\
+            .group_by(Contributor.id)\
             .order_by(desc('total_donation'))\
             .limit(limit)
 
@@ -139,13 +139,13 @@ class PoliticalDonationCommittee(Base):
 
     def contributors_by_type(self, limit=100):
 
-        return session.query(PoliticalDonationContributorType.type_name, 
+        return session.query(ContributorType.type_name, 
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationContributorType.donations)\
+            .join(ContributorType.donations)\
             .filter(PoliticalDonation.committee_id==self.id)\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
-            .group_by(PoliticalDonationContributorType.id)\
+            .group_by(ContributorType.id)\
             .order_by(desc('total_donation'))\
             .limit(limit)
 
@@ -172,10 +172,10 @@ class PoliticalDonationCommittee(Base):
         #    .filter(PoliticalDonation.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
         #    .filter(donation_2.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
 
-        return session.query(PoliticalDonationCommittee, 
+        return session.query(Committee, 
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationCommittee.donations)\
+            .join(Committee.donations)\
             .join(donation_2, PoliticalDonation.contributor_id==donation_2.contributor_id)\
             .filter(donation_2.contributor_id == PoliticalDonation.contributor_id)\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
@@ -183,7 +183,7 @@ class PoliticalDonationCommittee(Base):
             .filter(PoliticalDonation.committee_id != self.id)\
             .filter(donation_2.committee_id == self.id)\
             .filter(PoliticalDonation.contributor_id > 0)\
-            .group_by(PoliticalDonationCommittee.id)\
+            .group_by(Committee.id)\
             .order_by(desc('num_c'))\
             .limit(limit)
 
@@ -268,8 +268,8 @@ class OpenAddresses(Base):
 
 
 
-class PoliticalDonationContributorAddress(Base):
-    __tablename__ = 'political_donation_contributor_address'
+class ContributorAddress(Base):
+    __tablename__ = 'contributor_address'
     #__table_args__ = (
     #    Index('city', 'city', 'state'),
     #    Index('is_person', 'is_person', 'is_business')
@@ -304,21 +304,21 @@ class PoliticalDonationContributorAddress(Base):
     num_individual_contribs = Column(Integer, nullable=False, server_default='0')
     num_non_individual_contribs = Column(Integer, nullable=False, server_default='0')
 
-    cicero_districts = relationship(CiceroDistrict, secondary=t_political_donation_contributor_address_cicero_district_set,
-        backref=backref('addresses'))    
+    #cicero_districts = relationship(CiceroDistrict, secondary=t_political_donation_contributor_address_cicero_district_set,
+    #    backref=backref('addresses'))    
 
     def __repr__(self):
-        return "<PoliticalDonationContributorAddress(addr1='%s')>" % (self.addr1)
+        return "<ContributorAddress(addr1='%s')>" % (self.addr1)
 
 
 
-class PoliticalDonationContributorAddressCiceroDetails(Base):
+class ContributorAddressCiceroDetails(Base):
     __tablename__ = 'political_donation_contributor_address_cicero_details'
 
     id = Column(Integer, primary_key=True)
 
-    address_id = Column(Integer, ForeignKey(PoliticalDonationContributorAddress.id), nullable=False, index=True)
-    address = relationship(PoliticalDonationContributorAddress, backref=backref('cicero_detail', order_by=id))
+    address_id = Column(Integer, ForeignKey(ContributorAddress.id), nullable=False, index=True)
+    address = relationship(ContributorAddress, backref=backref('cicero_detail', order_by=id))
 
     wkid = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
@@ -337,13 +337,13 @@ class PoliticalDonationContributorAddressCiceroDetails(Base):
     geoservice = Column(String(32), nullable=False, server_default='')
 
 
-class PoliticalDonationContributorAddressCiceroRaw(Base):
+class ContributorAddressCiceroRaw(Base):
     __tablename__ = 'political_donation_contributor_address_cicero_raw'
 
     id = Column(Integer, primary_key=True)
 
-    #address_id = Column(Integer, ForeignKey(PoliticalDonationContributorAddress.id), nullable=False, index=True)
-    #address = relationship(PoliticalDonationContributorAddress, backref=backref('cicero_raw', order_by=id))
+    #address_id = Column(Integer, ForeignKey(ContributorAddress.id), nullable=False, index=True)
+    #address = relationship(ContributorAddress, backref=backref('cicero_raw', order_by=id))
 
 
     addr1 = Column(String(128), nullable=False, server_default='')
@@ -359,7 +359,7 @@ class PoliticalDonationContributorAddressCiceroRaw(Base):
     raw_text = Column(Text, nullable=False, server_default='')
 
     def __repr__(self):
-        return "<PoliticalDonationContributorAddressCiceroRaw(addr1='%s')>" % (self.addr1)
+        return "<ContributorAddressCiceroRaw(addr1='%s')>" % (self.addr1)
 
 
 
@@ -367,8 +367,8 @@ class PoliticalDonationContributorAddressCiceroRaw(Base):
 
 
 
-class PoliticalDonationContributor(Base):
-    __tablename__ = 'political_donation_contributor'
+class Contributor(Base):
+    __tablename__ = 'contributor'
     #__table_args__ = (
     #    Index('city', 'city', 'state'),
     #    Index('is_person', 'is_person', 'is_business')
@@ -378,8 +378,8 @@ class PoliticalDonationContributor(Base):
     #full_name = Column(String(128), nullable=False, server_default='')
     #full_address = Column(String(255), nullable=False, server_default='')
 
-    address_id = Column(Integer, ForeignKey(PoliticalDonationContributorAddress.id), nullable=False, index=True)
-    address = relationship(PoliticalDonationContributorAddress, backref=backref('contributors', order_by=id))
+    address_id = Column(Integer, ForeignKey(ContributorAddress.id), nullable=False, index=True)
+    address = relationship(ContributorAddress, backref=backref('contributors', order_by=id))
 
 
     name_prefix = Column(String(64), nullable=False, server_default='')
@@ -403,7 +403,7 @@ class PoliticalDonationContributor(Base):
     total_contributed_2016 = Column(Numeric(10, 2), nullable=False)        
 
     def __repr__(self):
-        return "<PoliticalDonationContributor(full_name='%s')>" % (self.full_name)
+        return "<Contributor(full_name='%s')>" % (self.full_name)
 
 
     def format_total_contributed_2015(self):
@@ -430,14 +430,14 @@ class PoliticalDonationContributor(Base):
 
     def committees_donated_to(self, limit=100):
 
-        return session.query(PoliticalDonationCommittee,
+        return session.query(Committee,
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationCommittee.donations)\
+            .join(Committee.donations)\
             .filter(PoliticalDonation.contributor_id == self.id)\
             .filter(PoliticalDonation.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
-            .group_by(PoliticalDonationCommittee.id)\
+            .group_by(Committee.id)\
             .order_by(desc('total_donation'))\
             .limit(limit)
 
@@ -446,17 +446,17 @@ class PoliticalDonationContributor(Base):
 
         donation_2 = aliased(PoliticalDonation)
 
-        contributor_2 = aliased(PoliticalDonationContributor)
+        contributor_2 = aliased(Contributor)
 
         #    .filter(PoliticalDonation.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
         #    .filter(donation_2.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
 
-        return session.query(PoliticalDonationContributor, 
+        return session.query(Contributor, 
                                 func.count(distinct(PoliticalDonation.committee)).label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationContributor.donations)\
+            .join(Contributor.donations)\
             .join(PoliticalDonation.committee)\
-            .join(donation_2, PoliticalDonationCommittee.id==donation_2.committee_id)\
+            .join(donation_2, Committee.id==donation_2.committee_id)\
             .join(contributor_2, donation_2.contributor_id==contributor_2.id)\
             .filter(donation_2.contributor_id == self.id)\
             .filter(PoliticalDonation.contributor_id != self.id)\
@@ -465,7 +465,7 @@ class PoliticalDonationContributor(Base):
             .filter(PoliticalDonation.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
             .filter(donation_2.contributor_type_id != app.config['CONTRIBUTOR_TYPE_INDIVIDUAL_ID'])\
             .filter(PoliticalDonation.contributor_id > 0)\
-            .group_by(PoliticalDonationContributor.id)\
+            .group_by(Contributor.id)\
             .order_by(desc('num_c'))\
 
 
@@ -484,13 +484,13 @@ class PoliticalDonationContributor(Base):
 
     def contributors_by_type(self, limit=100):
 
-        return session.query(PoliticalDonationContributorType.type_name, 
+        return session.query(ContributorType.type_name, 
                                 func.count('*').label('num_c'), 
                                 func.sum(PoliticalDonation.donation_amount).label('total_donation'))\
-            .join(PoliticalDonationContributorType.donations)\
+            .join(ContributorType.donations)\
             .filter(PoliticalDonation.contributor_id==self.id)\
             .filter(~PoliticalDonation.contribution_type_id.in_(app.config['CONTRIBUTION_TYPE_IDS_TO_IGNORE']))\
-            .group_by(PoliticalDonationContributorType.id)\
+            .group_by(ContributorType.id)\
             .order_by(desc('total_donation'))\
             .limit(limit)
 
@@ -500,8 +500,8 @@ class PoliticalDonationContributor(Base):
 
 
 
-class PoliticalDonationContributorType(Base):
-    __tablename__ = 'political_donation_contributor_type'
+class ContributorType(Base):
+    __tablename__ = 'contributor_type'
 
     id = Column(Integer, primary_key=True)
     type_name = Column(String(64), nullable=False)
@@ -509,7 +509,7 @@ class PoliticalDonationContributorType(Base):
     type_description = Column(Text, server_default='')
 
     def __repr__(self):
-        return "<PoliticalDonationContributorType(type_name='%s')>" % (self.type_name)
+        return "<ContributorType(type_name='%s')>" % (self.type_name)
 
 
 
@@ -558,20 +558,20 @@ class PoliticalDonation(Base):
     is_annonymous = Column(SmallInteger, nullable=False, server_default='0')
 
     #contributor_id = Column(Integer, nullable=False)
-    contributor_id = Column(Integer, ForeignKey(PoliticalDonationContributor.id), nullable=False, index=True)
-    contributor = relationship(PoliticalDonationContributor, backref=backref('donations', order_by=id))
+    contributor_id = Column(Integer, ForeignKey(Contributor.id), nullable=False, index=True)
+    contributor = relationship(Contributor, backref=backref('donations', order_by=id))
 
     #contributor_type_id = Column(Integer, nullable=False)
-    contributor_type_id = Column(Integer, ForeignKey(PoliticalDonationContributorType.id), nullable=False, index=True)
-    contributor_type = relationship(PoliticalDonationContributorType, backref=backref('donations', order_by=id))
+    contributor_type_id = Column(Integer, ForeignKey(ContributorType.id), nullable=False, index=True)
+    contributor_type = relationship(ContributorType, backref=backref('donations', order_by=id))
 
     #contribution_type_id = Column(Integer, nullable=False)
     contribution_type_id = Column(Integer, ForeignKey(PoliticalDonationContributionType.id), nullable=False, index=True)
     contribution_type = relationship(PoliticalDonationContributionType, backref=backref('donations', order_by=id))
 
     #committee_id = Column(Integer, nullable=False)
-    committee_id = Column(Integer, ForeignKey(PoliticalDonationCommittee.id), nullable=False, index=True)
-    committee = relationship(PoliticalDonationCommittee, backref=backref('donations', order_by=id))
+    committee_id = Column(Integer, ForeignKey(Committee.id), nullable=False, index=True)
+    committee = relationship(Committee, backref=backref('donations', order_by=id))
 
     #filing_period_id = Column(Integer, nullable=False)
     filing_period_id = Column(Integer, ForeignKey(PoliticalDonationFilingPeriod.id), nullable=False, index=True)
@@ -614,12 +614,12 @@ def return_donation_commitee_id_from_name(name):
 
     try:
 
-        committee = session.query(PoliticalDonationCommittee)\
-            .filter(PoliticalDonationCommittee.committee_name == name).one()
+        committee = session.query(Committee)\
+            .filter(Committee.committee_name == name).one()
 
     except Exception as e:
 
-        committee = PoliticalDonationCommittee()
+        committee = Committee()
         committee.committee_name = name
         committee.is_candidates = 0
         committee.candidate_id = 0
@@ -654,12 +654,12 @@ def return_contributor_type_id_from_name(name):
 
     try:
 
-        contributor_type = session.query(PoliticalDonationContributorType)\
-            .filter(PoliticalDonationContributorType.type_name == name).one()
+        contributor_type = session.query(ContributorType)\
+            .filter(ContributorType.type_name == name).one()
 
     except Exception as e:
 
-        contributor_type = PoliticalDonationContributorType()
+        contributor_type = ContributorType()
         contributor_type.type_name = name
 
         session.add(contributor_type)        
@@ -778,7 +778,7 @@ class DeElectionDBCache:
 
 
         self.donation_committees = {}
-        committees = session.query(PoliticalDonationCommittee)
+        committees = session.query(Committee)
         for c in committees:
             index = ''.join(re.findall('([a-z0-9])', c.committee_name.lower()))
             self.donation_committees[index] = c.id
@@ -791,7 +791,7 @@ class DeElectionDBCache:
 
 
         self.contributor_types = {}
-        contributor_types = session.query(PoliticalDonationContributorType)
+        contributor_types = session.query(ContributorType)
         for c in contributor_types:
             index = ''.join(re.findall('([a-z0-9])', c.type_name.lower()))
             self.contributor_types[index] = c.id

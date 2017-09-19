@@ -17,6 +17,12 @@ from functions import *
 
 from standardize_us_address import *
 
+"""
+
+TRUNCATE `political_donation`;
+TRUNCATE `raw_donations`;
+
+"""
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -194,16 +200,16 @@ for row in csvreader:
                 # Get address
                 try:
 
-                    contributor_address = session.query(PoliticalDonationContributorAddress)\
-                        .filter(PoliticalDonationContributorAddress.address_type == 'PO Box')\
-                        .filter(PoliticalDonationContributorAddress.po_box == address_dict['USPSBoxID'])\
-                        .filter(PoliticalDonationContributorAddress.zipcode == row_dict['EntityZip'])\
+                    contributor_address = session.query(ContributorAddress)\
+                        .filter(ContributorAddress.address_type == 'PO Box')\
+                        .filter(ContributorAddress.po_box == address_dict['USPSBoxID'])\
+                        .filter(ContributorAddress.zipcode == row_dict['EntityZip'])\
                         .one()
 
                 except Exception as e:
 
 
-                    contributor_address = PoliticalDonationContributorAddress()
+                    contributor_address = ContributorAddress()
                     contributor_address.address_type = address_dict['address_type']
 
                     contributor_address.po_box = address_dict['USPSBoxID']
@@ -239,12 +245,12 @@ for row in csvreader:
 
                     #print('Checking address')
 
-                    contributor_address = session.query(PoliticalDonationContributorAddress)\
-                        .filter(PoliticalDonationContributorAddress.address_type == 'Street Address')\
-                        .filter(PoliticalDonationContributorAddress.addr1 == addr1)\
-                        .filter(PoliticalDonationContributorAddress.zipcode == row_dict['EntityZip'])
+                    contributor_address = session.query(ContributorAddress)\
+                        .filter(ContributorAddress.address_type == 'Street Address')\
+                        .filter(ContributorAddress.addr1 == addr1)\
+                        .filter(ContributorAddress.zipcode == row_dict['EntityZip'])
 
-                    #print('obj:', PoliticalDonationContributorAddress)
+                    #print('obj:', ContributorAddress)
 
                     contributor_address = contributor_address.one()
 
@@ -254,7 +260,7 @@ for row in csvreader:
                     #print("Didn't find address:", addr1)
 
 
-                    contributor_address = PoliticalDonationContributorAddress()
+                    contributor_address = ContributorAddress()
                     contributor_address.address_type = address_dict['address_type']
 
                     street = ''
@@ -335,17 +341,17 @@ for row in csvreader:
                 # Check if contributor already exists from first,last,suffix,addr1,zipcode
                 try:
 
-                    contributor = session.query(PoliticalDonationContributor)\
-                        .filter(PoliticalDonationContributor.address_id == contributor_address_id)\
-                        .filter(PoliticalDonationContributor.name_first == name_first)\
-                        .filter(PoliticalDonationContributor.name_last == name_last)\
-                        .filter(PoliticalDonationContributor.name_suffix == name_suffix)\
+                    contributor = session.query(Contributor)\
+                        .filter(Contributor.address_id == contributor_address_id)\
+                        .filter(Contributor.name_first == name_first)\
+                        .filter(Contributor.name_last == name_last)\
+                        .filter(Contributor.name_suffix == name_suffix)\
                         .one()
 
                 except Exception as e:
 
 
-                    contributor = PoliticalDonationContributor()
+                    contributor = Contributor()
                     contributor.address_id = contributor_address_id
                     contributor.name_prefix = name_prefix
                     contributor.name_first = name_first
@@ -393,14 +399,14 @@ for row in csvreader:
                 # Check if contributor already exists from full_name,addr1,zipcode
                 try:
 
-                    contributor = session.query(PoliticalDonationContributor)\
-                        .filter(PoliticalDonationContributor.address_id == contributor_address_id)\
-                        .filter(PoliticalDonationContributor.name_business == corporation)\
+                    contributor = session.query(Contributor)\
+                        .filter(Contributor.address_id == contributor_address_id)\
+                        .filter(Contributor.name_business == corporation)\
                         .one()
 
                 except Exception as e:
 
-                    contributor = PoliticalDonationContributor()
+                    contributor = Contributor()
                     contributor.address_id = contributor_address_id
                     contributor.name_business = corporation
 
