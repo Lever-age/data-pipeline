@@ -30,6 +30,8 @@ year = int(sys.argv[1]) if len(sys.argv) > 1 else datetime.datetime.now().year
 
 file_location = current_dir+'/Explorer.Transactions.'+str(year)+'.YTD.txt'
 
+print file_location
+
 
 # amount_list is used to clean the amount
 amount_list = list('1234567890.,-')
@@ -52,10 +54,10 @@ csvreader = csv.reader(csvfile, delimiter='\t', quotechar='"')
 de_election_db_cache = DeElectionDBCache()
 de_election_db_cache.load_cache()
 
+header_row = next(csvreader)   # skip junk row (should not be first line) - 2017 hack
+header_row = next(csvreader)   # Get column names
 
-header_row = next(csvreader)   # skip the first line
-
-print(header_row)
+#print(header_row)
 
 city_list = []
 
@@ -76,6 +78,7 @@ for row in csvreader:
         row_dict = dict(zip(header_row, row))
 
         #print(line, row_dict['DocType'])
+        #print row_dict; break
 
 
         # cat Explorer.Transactions.2016.YTD.txt | grep 'Independent Expenditure'
